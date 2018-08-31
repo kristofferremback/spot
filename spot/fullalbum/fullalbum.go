@@ -58,7 +58,7 @@ func GetAlbumByTrack(client spotify.Client, track spotify.FullTrack) (spotify.Fu
 
 	if album.Tracks.Total < config.MinimumAlbumTotalCount {
 		for _, artist := range track.Artists {
-			logrus.Infof("Listing playlists for artist %s", artist.Name)
+			logrus.Infof("Listing albums for artist %s", artist.Name)
 
 			artistAlbums, err := listArtistAlbums(client, artist.ID)
 			if err != nil {

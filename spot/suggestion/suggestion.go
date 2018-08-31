@@ -146,3 +146,13 @@ func CreatePrintableTable(suggestions []Suggestion) string {
 
 	return output
 }
+
+func GetTracks(suggestions []Suggestion) []spotify.FullTrack {
+	tracks := []spotify.FullTrack{}
+
+	for _, suggestion := range suggestions {
+		tracks = append(tracks, suggestion.Track)
+	}
+
+	return tracks
+}

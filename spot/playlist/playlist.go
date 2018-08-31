@@ -115,6 +115,36 @@ func FlattenTracks(playlists []Playlist) []spotify.FullTrack {
 	return tracks
 }
 
+func SetRemotePlaylist(client spotify.Client, user *spotify.User, name string, tracks []spotify.FullTrack) (Playlist, error) {
+	remotePlaylist := Playlist{}
+	var err error
+
+	playlists, err := listSimplePlaylists(client, user)
+	if err != nil {
+		return remotePlaylist, err
+	}
+
+	if foundPlaylist, exists := findSimplePlaylist(
+		playlists, func(p spotify.SimplePlaylist) bool { return p.Name == name },
+	); exists {
+		remotePlaylist = CreatePlaylist(foundPlaylist)
+
+		remotePlaylist, err = truncatePlaylist(client, user, remotePlaylist)
+		if err != nil {
+			return remotePlaylist, err
+		}
+	} else {
+		created, err := createPlaylist(client, user, name)
+		if err != nil {
+			return remotePlaylist, err
+		}
+
+		remotePlaylist = CreatePlaylist(created.SimplePlaylist)
+	}
+
+	return addTracks(client, remotePlaylist, tracks)
+}
+
 func listSimplePlaylists(client spotify.Client, user *spotify.User) ([]spotify.SimplePlaylist, error) {
 	pageLimit := 50
 	totalCount := -1
@@ -233,4 +263,72 @@ func findSimplePlaylist(
 	}
 
 	return spotify.SimplePlaylist{}, false
+}
+
+func createPlaylist(client spotify.Client, user *spotify.User, name string) (spotify.FullPlaylist, error) {
+	fullPlaylist, err := client.CreatePlaylistForUser(user.ID, name, true)
+	if err != nil {
+		return spotify.FullPlaylist{}, fmt.Errorf("Failed to create playlist %s: %v", name, err)
+	}
+
+	logrus.Infof("Successfully created playlist %s", fullPlaylist.Name)
+
+	return *fullPlaylist, nil
+}
+
+func truncatePlaylist(client spotify.Client, user *spotify.User, playlist Playlist) (Playlist, error) {
+	trackIDs := []spotify.ID{}
+	tracks := playlist.Tracks
+	var err error
+
+	if !playlist.TracksPopulated {
+		tracks, err = listTracks(client, user, playlist.SimplePlaylist)
+		if err != nil {
+			return playlist, err
+		}
+	}
+
+	if len(tracks) == 0 {
+		return playlist, nil
+	}
+
+	for _, track := range tracks {
+		trackIDs = append(trackIDs, track.ID)
+	}
+
+	playlist.SnapshotID, err = client.RemoveTracksFromPlaylist(
+		user.ID,
+		playlist.ID,
+		trackIDs...,
+	)
+	if err != nil {
+		return playlist, fmt.Errorf("Failed to truncate playlist %s: %v", playlist.Name, err)
+	}
+
+	logrus.Infof("Successfully truncated playlist %s", playlist.Name)
+
+	return playlist, nil
+}
+
+func addTracks(client spotify.Client, playlist Playlist, tracks []spotify.FullTrack) (Playlist, error) {
+	var err error
+
+	trackIDs := []spotify.ID{}
+
+	for _, track := range tracks {
+		trackIDs = append(trackIDs, track.ID)
+	}
+
+	playlist.SnapshotID, err = client.AddTracksToPlaylist(
+		playlist.SimplePlaylist.Owner.ID,
+		playlist.ID,
+		trackIDs...,
+	)
+	if err != nil {
+		return playlist, fmt.Errorf("Failed to add tracks to playlist %s: %v", playlist.Name, err)
+	}
+
+	logrus.Infof("Successfully added %d tracks to playlist %s", len(tracks), playlist.Name)
+
+	return playlist, nil
 }

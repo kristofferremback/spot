@@ -1,7 +1,11 @@
 package utils
 
 import (
+	"os/exec"
+	"runtime"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/zmb3/spotify"
 )
@@ -62,4 +66,22 @@ func MultiplyString(value string, iterations int) string {
 	}
 
 	return output
+}
+
+func OpenBrowser(url string) {
+	var args []string
+
+	switch runtime.GOOS {
+	case "darwin":
+		args = []string{"open"}
+	case "windows":
+		args = []string{"cmd", "/c", "start"}
+	default:
+		args = []string{"xdg-open"}
+	}
+
+	cmd := exec.Command(args[0], append(args[1:], url)...)
+	if err := cmd.Start(); err != nil {
+		logrus.Fatalf("Failed to open browser: %v", err)
+	}
 }

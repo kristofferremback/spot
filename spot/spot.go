@@ -1,6 +1,8 @@
 package spot
 
 import (
+	"fmt"
+
 	"github.com/kristofferostlund/spot/spot/config"
 	"github.com/kristofferostlund/spot/spot/playlist"
 	"github.com/kristofferostlund/spot/spot/spotifytrack/fulltrack"
@@ -18,6 +20,35 @@ type State struct {
 	Suggestions        []suggestion.Suggestion
 }
 
+func Run(client spotify.Client) {
+	state, err := GetState(client)
+	if err != nil {
+		logrus.Error(err)
+
+		return
+	}
+
+	defer fmt.Printf("\n%s\n", suggestion.CreatePrintableTable(state.Suggestions))
+
+	if config.OutputType == config.OutputTypePlaylist {
+		remotePlaylist, err := playlist.SetRemotePlaylist(
+			client,
+			state.User,
+			config.SpottedPlaylistName,
+			suggestion.GetTracks(state.Suggestions),
+		)
+		if err != nil {
+			logrus.Error(err)
+
+			return
+		}
+
+		logrus.Infof("Set playlist %s with the suggested tracks.", remotePlaylist.Name)
+
+		return
+	}
+}
+
 func GetState(client spotify.Client) (State, error) {
 	var err error
 	state := State{}
@@ -29,7 +60,11 @@ func GetState(client spotify.Client) (State, error) {
 
 	logrus.Infof("Fetching public playlists of user %s", config.UserName)
 
-	state.Playlists, err = playlist.GetMetalPlaylists(client, state.User)
+	state.Playlists, err = playlist.GetPlaylistsMatchingPattern(
+		client,
+		state.User,
+		config.PlaylistNamePattern,
+	)
 	if err != nil {
 		return state, err
 	}

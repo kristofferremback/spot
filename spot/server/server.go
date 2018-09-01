@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const ServerClosedErrorMessage = "http: Server closed"
+
 type server struct {
 	router     *http.ServeMux
 	httpServer *http.Server
@@ -47,12 +49,16 @@ func serve(srv server) {
 	srv.httpServer.Handler = srv.router
 
 	if err := srv.httpServer.ListenAndServe(); err != nil {
-		logrus.Fatal(err)
+		if err.Error() != ServerClosedErrorMessage {
+			logrus.Fatal(err)
+		}
 	}
 }
 
 func closeServer(srv server) {
 	logrus.Info("Shutting down server...")
+	defer os.Exit(0)
+	defer logrus.Info("Server successfully shut down")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -102,15 +102,15 @@ func MakeStringSortable(input string, minNumberCount int) string {
 		}
 
 		if currentNumberRange != "" {
-			if len(currentNumberRange) < minNumberCount {
-				currentNumberRange = LeftPad(currentNumberRange, minNumberCount, "0")
-			}
-
-			output += currentNumberRange
+			output += LeftPad(currentNumberRange, minNumberCount, "0")
 			currentNumberRange = ""
 		}
 
 		output += stringified
+	}
+
+	if currentNumberRange != "" {
+		return output + LeftPad(currentNumberRange, minNumberCount, "0")
 	}
 
 	return output

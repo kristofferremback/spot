@@ -19,7 +19,6 @@ func (s *server) handleAuthentication() http.HandlerFunc {
 	auth.OpenAuthURL(authenticator, state)
 
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		token, err := authenticator.Token(state, r)
 		if err != nil {
 			http.Error(w, "Failed to get token", http.StatusNotFound)
@@ -35,8 +34,7 @@ func (s *server) handleAuthentication() http.HandlerFunc {
 			s.callback(client)
 		}()
 
-		_, err = w.Write([]byte("OK"))
-		if err != nil {
+		if _, err = w.Write([]byte("OK")); err != nil {
 			logrus.Fatal(err)
 		}
 	}

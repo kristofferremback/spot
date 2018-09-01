@@ -53,12 +53,16 @@ func GetState(client spotify.Client) (State, error) {
 	var err error
 	state := State{}
 
-	state.User, err = spotifyuser.GetPublicProfile(client, config.UserName)
+	if config.CredentialsFlow == config.CredentialsFlowRedirect {
+		state.User, err = spotifyuser.GetCurrentUser(client)
+	} else {
+		state.User, err = spotifyuser.GetPublicProfile(client, config.UserName)
+	}
 	if err != nil {
 		return state, err
 	}
 
-	logrus.Infof("Fetching public playlists of user %s", config.UserName)
+	logrus.Infof("Fetching playlists of user %s", state.User.ID)
 
 	state.Playlists, err = playlist.GetPlaylistsMatchingPattern(
 		client,

@@ -167,6 +167,13 @@ func listSimplePlaylists(client spotify.Client, user *spotify.User) ([]spotify.S
 		playlists = append(playlists, page.Playlists...)
 	}
 
+	sort.Slice(playlists, func(i, j int) bool {
+		current := utils.MakeStringSortable(playlists[i].Name, config.NumberPaddingSize)
+		next := utils.MakeStringSortable(playlists[j].Name, config.NumberPaddingSize)
+
+		return current > next
+	})
+
 	return playlists, nil
 }
 
@@ -234,13 +241,6 @@ func filterByPattern(
 			playlists = append(playlists, CreatePlaylist(simplePlaylist))
 		}
 	}
-
-	sort.Slice(playlists, func(i, j int) bool {
-		current := utils.MakeStringSortable(playlists[i].Name, config.NumberPaddingSize)
-		next := utils.MakeStringSortable(playlists[j].Name, config.NumberPaddingSize)
-
-		return current > next
-	})
 
 	return playlists
 }

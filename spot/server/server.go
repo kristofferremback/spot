@@ -57,6 +57,7 @@ func serve(srv server) {
 
 func closeServer(srv server) {
 	logrus.Info("Shutting down server...")
+
 	defer os.Exit(0)
 	defer logrus.Info("Server successfully shut down")
 

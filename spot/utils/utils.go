@@ -10,6 +10,8 @@ import (
 	"github.com/zmb3/spotify"
 )
 
+const Numbers = "1234567890"
+
 func JoinArtists(artists []spotify.SimpleArtist, separator string) string {
 	return strings.Join(
 		func() []string {
@@ -84,4 +86,40 @@ func OpenBrowser(url string) {
 	if err := cmd.Start(); err != nil {
 		logrus.Fatalf("Failed to open browser: %v", err)
 	}
+}
+
+func MakeStringSortable(input string, minNumberCount int) string {
+	output := ""
+	currentNumberRange := ""
+
+	for _, character := range input {
+		stringified := string(character)
+
+		if strings.Contains(Numbers, stringified) {
+			currentNumberRange += stringified
+
+			continue
+		}
+
+		if currentNumberRange != "" {
+			if len(currentNumberRange) < minNumberCount {
+				currentNumberRange = LeftPad(currentNumberRange, minNumberCount, "0")
+			}
+
+			output += currentNumberRange
+			currentNumberRange = ""
+		}
+
+		output += stringified
+	}
+
+	return output
+}
+
+func LeftPad(input string, minWidth int, padChar string) string {
+	if len(input) >= minWidth {
+		return input
+	}
+
+	return MultiplyString(padChar, minWidth-len(input)) + input
 }

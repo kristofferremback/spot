@@ -17,14 +17,16 @@ const (
 	CredentialsFlowClientCredentials = "client-credentials"
 	CredentialsFlowRedirect          = "redirect"
 
-	MetalPlaylistPattern = "^Metal ([0-9]+)"
-	CacheFilename        = ".ignored/.cache.json"
+	defaultPlaylistPattern = "^Metal ([0-9]+)"
+	CacheFilename          = ".ignored/.cache.json"
 
 	DiscoverWeeklyName = "Discover Weekly"
 	ReleaseRadarName   = "Release Radar"
 
 	MinimumAlbumTotalCount = 3
 	AlbumChunkSize         = 20
+
+	NumberPaddingSize = 20
 
 	ArtistJoinCharacter = ","
 
@@ -36,7 +38,9 @@ var (
 	ClientID     = os.Getenv("SPOTIFY_ID")
 	ClientSecret = os.Getenv("SPOTIFY_SECRET")
 
-	UserName = ""
+	UserName = defaultUserName
+
+	PlaylistNamePattern = defaultPlaylistPattern
 
 	DiscoveryPlaylistNames   = []string{DiscoverWeeklyName, ReleaseRadarName}
 	DiscoveryPlaylistNameMap = map[string]string{
@@ -94,6 +98,12 @@ var credentialsFlowFlag = flag.String(
 	"The credentials flow to use. \"client-credentials\" or \"redirect\"",
 )
 
+var playlistNamePatternFlag = flag.String(
+	"playlist-pattern",
+	defaultPlaylistPattern,
+	"The playlist name pattern to use as base",
+)
+
 func init() {
 	flag.Parse()
 
@@ -103,4 +113,5 @@ func init() {
 	Address = *addressFlag
 	CredentialsFlow = *credentialsFlowFlag
 	RedirectURL = fmt.Sprintf(redirectURLBase, *addressFlag, *portFlag)
+	PlaylistNamePattern = *playlistNamePatternFlag
 }

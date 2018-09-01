@@ -8,6 +8,7 @@ import (
 
 	"github.com/kristofferostlund/spot/spot/cache"
 	"github.com/kristofferostlund/spot/spot/config"
+	"github.com/kristofferostlund/spot/spot/utils"
 	"github.com/sirupsen/logrus"
 
 	"github.com/zmb3/spotify"
@@ -33,7 +34,7 @@ func CreatePlaylist(simplePlaylist spotify.SimplePlaylist) Playlist {
 	}
 }
 
-func GetMetalPlaylists(client spotify.Client, user *spotify.User) ([]Playlist, error) {
+func GetPlaylistsMatchingPattern(client spotify.Client, user *spotify.User, pattern string) ([]Playlist, error) {
 	playlists := []Playlist{}
 	cachedPlaylists := []Playlist{}
 
@@ -46,10 +47,7 @@ func GetMetalPlaylists(client spotify.Client, user *spotify.User) ([]Playlist, e
 		return playlists, err
 	}
 
-	for _, playlist := range filterByPattern(
-		simplePlaylists,
-		config.MetalPlaylistPattern,
-	) {
+	for _, playlist := range filterByPattern(simplePlaylists, pattern) {
 		if cachedPlaylist, isCached := findPlaylist(cachedPlaylists, func(p Playlist) bool {
 			return p.SnapshotID == playlist.SnapshotID
 		}); isCached {
@@ -115,7 +113,12 @@ func FlattenTracks(playlists []Playlist) []spotify.FullTrack {
 	return tracks
 }
 
-func SetRemotePlaylist(client spotify.Client, user *spotify.User, name string, tracks []spotify.FullTrack) (Playlist, error) {
+func SetRemotePlaylist(
+	client spotify.Client,
+	user *spotify.User,
+	name string,
+	tracks []spotify.FullTrack,
+) (Playlist, error) {
 	remotePlaylist := Playlist{}
 	var err error
 
@@ -233,8 +236,8 @@ func filterByPattern(
 	}
 
 	sort.Slice(playlists, func(i, j int) bool {
-		current := getPlaylistNumber(re, playlists[i].Name)
-		next := getPlaylistNumber(re, playlists[j].Name)
+		current := utils.MakeStringSortable(playlists[i].Name, config.NumberPaddingSize)
+		next := utils.MakeStringSortable(playlists[j].Name, config.NumberPaddingSize)
 
 		return current > next
 	})

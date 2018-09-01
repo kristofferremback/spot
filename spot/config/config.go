@@ -4,12 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 )
 
 const (
-	defaultUserName                  = "drklump"
-	defaultPort                      = 4000
-	defaultAddress                   = "localhost"
+	defaultUserName = "drklump"
+	defaultPort     = 4000
+	defaultAddress  = "localhost"
+
 	OutputTypeConsole                = "console"
 	OutputTypePlaylist               = "playlist"
 	CredentialsFlowClientCredentials = "client-credentials"
@@ -18,16 +20,16 @@ const (
 	MetalPlaylistPattern = "^Metal ([0-9]+)"
 	CacheFilename        = ".ignored/.cache.json"
 
-	DiscoverWeeklyName          = "Discover Weekly"
-	ReleaseRadarName            = "Release Radar"
-	OutputDiscoveryPlaylistName = "Kristoffer's Total Discovery"
+	DiscoverWeeklyName = "Discover Weekly"
+	ReleaseRadarName   = "Release Radar"
 
 	MinimumAlbumTotalCount = 3
 	AlbumChunkSize         = 20
 
 	ArtistJoinCharacter = ","
 
-	RedirectURLBase = "http://%s:%d/authenticate"
+	spottedPlaylistBase = "Spotted™ %s"
+	redirectURLBase     = "http://%s:%d/authenticate"
 )
 
 var (
@@ -52,9 +54,10 @@ var (
 		"remix":        -30,
 	}
 
-	Port        = defaultPort
-	Address     = defaultAddress
-	RedirectURL = ""
+	Port                = defaultPort
+	Address             = defaultAddress
+	RedirectURL         = ""
+	SpottedPlaylistName = fmt.Sprintf(spottedPlaylistBase, time.Now().Format("2006-01-02"))
 
 	CredentialsFlow = CredentialsFlowClientCredentials
 
@@ -99,5 +102,5 @@ func init() {
 	Port = *portFlag
 	Address = *addressFlag
 	CredentialsFlow = *credentialsFlowFlag
-	RedirectURL = fmt.Sprintf(RedirectURLBase, *addressFlag, *portFlag)
+	RedirectURL = fmt.Sprintf(redirectURLBase, *addressFlag, *portFlag)
 }

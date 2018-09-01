@@ -45,7 +45,7 @@ func callback(client spotify.Client) {
 		remotePlaylist, err := playlist.SetRemotePlaylist(
 			client,
 			state.User,
-			config.OutputDiscoveryPlaylistName,
+			config.SpottedPlaylistName,
 			suggestion.GetTracks(state.Suggestions),
 		)
 		if err != nil {

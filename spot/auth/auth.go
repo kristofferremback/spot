@@ -45,6 +45,7 @@ func RedirectAuthenticator(clientID, clientSecret, redirectURL string) (spotify.
 		spotify.ScopePlaylistReadPrivate,
 		spotify.ScopePlaylistModifyPrivate,
 		spotify.ScopePlaylistModifyPublic,
+		spotify.ScopeUserTopRead,
 	)
 
 	authenticator.SetAuthInfo(clientID, clientSecret)

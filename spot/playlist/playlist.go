@@ -49,7 +49,7 @@ func GetPlaylistsMatchingPattern(client spotify.Client, user *spotify.User, patt
 		return playlists, err
 	}
 
-	for _, playlist := range filterByPattern(simplePlaylists, pattern) {
+	for _, playlist := range filterByPatternWithIgnored(simplePlaylists, pattern) {
 		if cachedPlaylist, isCached := findPlaylist(cachedPlaylists, func(p Playlist) bool {
 			return p.SnapshotID == playlist.SnapshotID
 		}); isCached {
@@ -239,7 +239,7 @@ func getPlaylistNumber(re *regexp.Regexp, name string) int {
 	return value
 }
 
-func filterByPattern(
+func filterByPatternWithIgnored(
 	simplePlaylists []spotify.SimplePlaylist,
 	pattern string,
 ) []Playlist {
@@ -247,6 +247,11 @@ func filterByPattern(
 	re := regexp.MustCompile(pattern)
 
 	for _, simplePlaylist := range simplePlaylists {
+		if simplePlaylist.Name == config.DiscoverWeeklyName ||
+			simplePlaylist.Name == config.ReleaseRadarName {
+			continue
+		}
+
 		if re.MatchString(simplePlaylist.Name) {
 			playlists = append(playlists, CreatePlaylist(simplePlaylist))
 		}
@@ -321,13 +326,18 @@ func truncatePlaylist(client spotify.Client, user *spotify.User, playlist Playli
 func addTracks(client spotify.Client, playlist Playlist, tracks []spotify.FullTrack) (Playlist, error) {
 	var err error
 
-	playlist.SnapshotID, err = client.AddTracksToPlaylist(
-		playlist.SimplePlaylist.Owner.ID,
-		playlist.ID,
-		utils.GetSpotifyIDs(tracks)...,
-	)
-	if err != nil {
-		return playlist, fmt.Errorf("Failed to add tracks to playlist %s: %v", playlist.Name, err)
+	chunks := utils.ChunkIDs(utils.GetSpotifyIDs(tracks), 100)
+
+	for _, trackIDs := range chunks {
+		playlist.SnapshotID, err = client.AddTracksToPlaylist(
+			playlist.SimplePlaylist.Owner.ID,
+			playlist.ID,
+			trackIDs...,
+		)
+
+		if err != nil {
+			return playlist, fmt.Errorf("Failed to add tracks to playlist %s: %v", playlist.Name, err)
+		}
 	}
 
 	logrus.Infof("Successfully added %d tracks to playlist %s", len(tracks), playlist.Name)

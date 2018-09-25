@@ -32,7 +32,20 @@ func Get(client spotify.Client, id spotify.ID) (spotify.FullAlbum, error) {
 
 func GetMany(client spotify.Client, albumIDs []spotify.ID) ([]spotify.FullAlbum, error) {
 	albums := []spotify.FullAlbum{}
-	chunks := utils.ChunkIDs(albumIDs, config.AlbumChunkSize)
+	uncachedAlbumIDs := []spotify.ID{}
+	albumMap := map[spotify.ID]spotify.FullAlbum{}
+
+	for _, id := range albumIDs {
+		if album, exists := albumCache[id]; exists {
+			albumMap[id] = album
+
+			continue
+		}
+
+		uncachedAlbumIDs = append(uncachedAlbumIDs, id)
+	}
+
+	chunks := utils.ChunkIDs(uncachedAlbumIDs, config.AlbumChunkSize)
 
 	for _, chunk := range chunks {
 		albumChunk, err := client.GetAlbums(chunk...)
@@ -41,10 +54,19 @@ func GetMany(client spotify.Client, albumIDs []spotify.ID) ([]spotify.FullAlbum,
 		}
 
 		for _, album := range albumChunk {
-			albums = append(albums, *album)
-
+			albumMap[album.ID] = *album
 			albumCache[album.ID] = *album
 		}
+	}
+
+	for _, id := range albumIDs {
+		if album, exists := albumMap[id]; exists {
+			albums = append(albums, album)
+
+			continue
+		}
+
+		logrus.Warnf("Somehow missed the album for ID %v", id)
 	}
 
 	return albums, nil

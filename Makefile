@@ -13,7 +13,22 @@ cli-redirect:
 		-user drklump \
 		-playlist-pattern '^Metal [0-9]+' \
 		-credentials-flow redirect \
-		-output-type playlist
+		-output-type playlist \
+		-operation discovery
+
+cli-redirect-all:
+	go run cli/cli.go \
+		-playlist-pattern '.*' \
+		-credentials-flow redirect \
+		-output-type playlist \
+		-operation discovery
+
+cli-redirect-all-recommendation:
+	go run cli/cli.go \
+		-playlist-pattern '.*' \
+		-credentials-flow redirect \
+		-output-type playlist \
+		-operation recommendation
 
 cli-redirect-recommendation:
 	go run cli/cli.go \

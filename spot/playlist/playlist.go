@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/kristofferostlund/spot/spot/spotifytrack/fulltrack"
+
 	"github.com/kristofferostlund/spot/spot/cache"
 	"github.com/kristofferostlund/spot/spot/config"
 	"github.com/kristofferostlund/spot/spot/utils"
@@ -146,6 +148,14 @@ func SetRemotePlaylist(
 	}
 
 	return addTracks(client, remotePlaylist, tracks)
+}
+
+func FindPlaylistByTrack(playlists []Playlist, track spotify.FullTrack) (Playlist, bool) {
+	return findPlaylist(playlists, func(playlist Playlist) bool {
+		trackMap := fulltrack.CreateMap(playlist.Tracks)
+
+		return fulltrack.InMap(trackMap, track)
+	})
 }
 
 func listSimplePlaylists(client spotify.Client, user *spotify.User) ([]spotify.SimplePlaylist, error) {

@@ -2,6 +2,9 @@ package spot
 
 import (
 	"fmt"
+	"math"
+	"regexp"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
@@ -12,6 +15,7 @@ import (
 	"github.com/kristofferostlund/spot/spot/spotifytrack/fulltrack"
 	"github.com/kristofferostlund/spot/spot/spotifyuser"
 	"github.com/kristofferostlund/spot/spot/suggestion"
+	"github.com/kristofferostlund/spot/spot/utils"
 )
 
 type State struct {
@@ -45,10 +49,97 @@ func Run(client spotify.Client) {
 		recommend(client)
 
 		break
+	case config.OperationTypeCheckTrackExists:
+		checkTrackExists(client)
+
+		break
+	case config.OperationTypeCheckPlaylistHoles:
+		checkPlaylistHoles(client)
+
+		break
 	default:
 		logrus.Errorf("Operation type %s is not a valid operation type", config.OperationType)
 
 		break
+	}
+}
+
+func checkTrackExists(client spotify.Client) {
+	status, err := client.PlayerCurrentlyPlaying()
+	if err != nil {
+		logrus.Error(err)
+
+		return
+	}
+
+	if !status.Playing {
+		logrus.Warn("User doesn't seem to listen to spotify currently")
+
+		return
+	}
+
+	logrus.Infof(
+		"User is listening to %s by %s. Checking if it's new",
+		status.Item.Name,
+		utils.JoinArtists(status.Item.Artists, ", "),
+	)
+
+	currentTrack, err := fulltrack.Get(client, status.Item.ID)
+	if err != nil {
+		logrus.Error(err)
+
+		return
+	}
+
+	state, err := getState(client)
+	if err != nil {
+		logrus.Error(err)
+
+		return
+	}
+
+	foundPlaylist, exists := playlist.FindPlaylistByTrack(state.Playlists, currentTrack)
+	if exists {
+		logrus.Infof("The track already on playlist %s", foundPlaylist.Name)
+
+		return
+	}
+
+	logrus.Infof("The track is new, quite amazing I'd say!")
+}
+
+func checkPlaylistHoles(client spotify.Client) {
+	numbers := []int{}
+	holes := []int{}
+
+	state, err := getState(client)
+	if err != nil {
+		logrus.Error(err)
+
+		return
+	}
+
+	for index, list := range state.Playlists {
+		pattern := regexp.MustCompile("Metal 0*(\\d+)")
+
+		numberString := pattern.FindStringSubmatch(list.Name)[1]
+		value, err := strconv.Atoi(numberString)
+
+		if err != nil {
+			logrus.Warnf("Failed to parse %s: %v", numberString, err)
+
+			continue
+		}
+
+		numbers = append(numbers, value)
+
+		if index > 0 && math.Abs(float64(numbers[index-1]-value)) != 1.0 {
+			holes = append(holes, value+1)
+		}
+	}
+
+	for _, hole := range holes {
+		logrus.Infof("Found a potential hole at %d", hole)
 	}
 }
 

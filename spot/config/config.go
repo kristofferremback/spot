@@ -19,11 +19,14 @@ const (
 
 	OperationTypeDiscovery            = "discovery"
 	OperationTypeTrackRecommendations = "recommendation"
+	OperationTypeCheckTrackExists     = "check-track"
+	OperationTypeCheckPlaylistHoles   = "check-playlist-holes"
 
 	CountrySweden = "SE"
 
 	defaultPlaylistPattern = "^Metal ([0-9]+)"
 	CacheFilename          = ".ignored/.cache.json"
+	TokenCacheFilename     = ".ignored/.token-cache.json"
 
 	DiscoverWeeklyName = "Discover Weekly"
 	ReleaseRadarName   = "Release Radar"

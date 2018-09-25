@@ -11,6 +11,20 @@ import (
 
 func main() {
 	if config.CredentialsFlow == config.CredentialsFlowRedirect {
+		client, exists, err := auth.CachedRedirect(
+			config.ClientID,
+			config.ClientSecret,
+			config.RedirectURL,
+		)
+
+		if exists && err == nil {
+			spot.Run(client)
+
+			return
+		} else if exists && err != nil {
+			logrus.Warnf("Failed to read token cache: %v", err)
+		}
+
 		server.Serve(spot.Run)
 
 		return

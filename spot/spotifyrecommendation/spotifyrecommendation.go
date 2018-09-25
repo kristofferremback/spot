@@ -3,6 +3,7 @@ package spotifyrecommendation
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
@@ -136,11 +137,44 @@ func getTrackAttributes(client spotify.Client, tracks []spotify.FullTrack) (*spo
 	averageValence := utils.AverageFloat(valence)
 
 	attributes = spotify.NewTrackAttributes().
-		MaxAcousticness(math.Min(averageAcousticness+.3, 0.8)).
-		MaxInstrumentalness(math.Min(averageInstrumentalness+.3, 0.8)).
-		MaxLiveness(math.Min(averageLiveness+.3, 0.8)).
-		MinEnergy(math.Max(averageEnergy-.3, 0.3)).
-		MaxValence(math.Min(averageValence+.3, 0.8))
+		MaxAcousticness(asAttribute("max", averageAcousticness)).
+		MinAcousticness(asAttribute("min", averageAcousticness)).
+		MaxEnergy(asAttribute("max", averageEnergy)).
+		MinEnergy(asAttribute("min", averageEnergy)).
+		MaxInstrumentalness(asAttribute("max", averageInstrumentalness)).
+		MinInstrumentalness(asAttribute("min", averageInstrumentalness)).
+		MaxLiveness(asAttribute("max", averageLiveness)).
+		MinLiveness(asAttribute("min", averageLiveness)).
+		MaxValence(asAttribute("max", averageValence)).
+		MinValence(asAttribute("min", averageValence))
 
 	return attributes, nil
+}
+
+func asAttribute(attributeType string, value float64) float64 {
+	minValue := 0.0
+	maxValue := 1.0
+	modifier := 0.3
+
+	switch strings.ToLower(attributeType) {
+	case "max":
+		minValue = 0.3
+
+		break
+	case "min":
+		maxValue = .8
+		modifier = -modifier
+
+		break
+	default:
+		logrus.Warnf("Received an invalid recommendation attributeType: %s", attributeType)
+
+		break
+	}
+
+	if value < .5 {
+		return math.Max(value+modifier, minValue)
+	}
+
+	return math.Min(value+modifier, maxValue)
 }

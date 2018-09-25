@@ -40,16 +40,6 @@ func GetMany(client spotify.Client, albumIDs []spotify.ID) ([]spotify.FullAlbum,
 	return albums, nil
 }
 
-func GetManyBySimpleAlbum(client spotify.Client, simpleAlbums []spotify.SimpleAlbum) ([]spotify.FullAlbum, error) {
-	albumIDs := []spotify.ID{}
-
-	for _, album := range simpleAlbums {
-		albumIDs = append(albumIDs, album.ID)
-	}
-
-	return GetMany(client, albumIDs)
-}
-
 func GetAlbumByTrack(client spotify.Client, track spotify.FullTrack) (spotify.FullAlbum, error) {
 	album, err := Get(client, track.Album.ID)
 	if err != nil {
@@ -102,5 +92,5 @@ func listArtistAlbums(client spotify.Client, artistID spotify.ID) ([]spotify.Ful
 		totalCount = page.Total
 	}
 
-	return GetManyBySimpleAlbum(client, albums)
+	return GetMany(client, utils.GetSpotifyIDs(albums))
 }

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os/exec"
+	"reflect"
 	"runtime"
 	"strings"
 
@@ -122,4 +123,66 @@ func LeftPad(input string, minWidth int, padChar string) string {
 	}
 
 	return MultiplyString(padChar, minWidth-len(input)) + input
+}
+
+func GetSpotifyIDs(input interface{}) []spotify.ID {
+	values := getItemPropertyValue(input, "ID")
+	ids := []spotify.ID{}
+
+	for _, value := range values {
+		if id, ok := value.(spotify.ID); ok {
+			ids = append(ids, id)
+		} else {
+			panic(&reflect.ValueError{Method: "GetSpotifyIDs", Kind: reflect.ValueOf(value).Kind()})
+		}
+	}
+
+	return ids
+}
+
+func GetSpotifyNames(input interface{}) []string {
+	values := getItemPropertyValue(input, "Name")
+	names := []string{}
+
+	for _, value := range values {
+		if name, ok := value.(string); ok {
+			names = append(names, name)
+		} else {
+			panic(&reflect.ValueError{Method: "GetSpotifyNames", Kind: reflect.ValueOf(value).Kind()})
+		}
+	}
+
+	return names
+}
+
+func getItemPropertyValue(input interface{}, fieldName string) []interface{} {
+	var slice reflect.Value
+	output := []interface{}{}
+
+	value := reflect.ValueOf(input)
+
+	// Support both pointers and slices
+	if value.Kind() == reflect.Ptr {
+		slice = value.Elem()
+	} else {
+		slice = value
+	}
+
+	for i := 0; i < slice.Len(); i++ {
+		fieldValue := slice.Index(i).FieldByName(fieldName)
+
+		output = append(output, fieldValue.Interface())
+	}
+
+	return output
+}
+
+func AverageFloat(values []float64) float64 {
+	var total float64
+
+	for _, value := range values {
+		total += value
+	}
+
+	return total / float64(len(values))
 }

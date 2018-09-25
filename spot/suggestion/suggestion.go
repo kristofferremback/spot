@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/zmb3/spotify"
 
 	"github.com/kristofferostlund/spot/spot/config"
 	"github.com/kristofferostlund/spot/spot/fullalbum"
@@ -14,8 +15,6 @@ import (
 	"github.com/kristofferostlund/spot/spot/spotifytrack/fulltrack"
 	"github.com/kristofferostlund/spot/spot/utils"
 	"github.com/kristofferostlund/spotter/spotter/common"
-
-	"github.com/zmb3/spotify"
 )
 
 type Suggestion struct {
@@ -105,6 +104,42 @@ func GetSuggestions(
 
 					suggestions = append(suggestions, suggestion)
 				}
+			}
+		}
+	}
+
+	sort.Slice(suggestions, func(i, j int) bool {
+		return suggestions[i].Relevance > suggestions[j].Relevance
+	})
+
+	logrus.Infof("Successfully generated %d suggestions", len(suggestions))
+
+	return suggestions, nil
+}
+
+func GetSuggestionsFromTracks(
+	client spotify.Client,
+	baseTracks []spotify.FullTrack,
+	existingTracks []spotify.FullTrack,
+) ([]Suggestion, error) {
+	trackMap := fulltrack.CreateMap(existingTracks)
+	tracksByArtist := fulltrack.GroupByArtists(existingTracks)
+
+	suggestions := []Suggestion{}
+
+	logrus.Info("Generating suggestions")
+
+	for _, track := range baseTracks {
+		if !fulltrack.InMap(trackMap, track) {
+			suggestion, err := CreateSuggestion(client, playlist.Playlist{}, track)
+			if err != nil {
+				return suggestions, err
+			}
+
+			if suggestion.Album.Tracks.Total > config.MinimumAlbumTotalCount {
+				suggestion.CalculateRelevance(tracksByArtist)
+
+				suggestions = append(suggestions, suggestion)
 			}
 		}
 	}

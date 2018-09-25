@@ -18,6 +18,30 @@ func Get(client spotify.Client, id spotify.ID) (spotify.FullTrack, error) {
 	return *track, nil
 }
 
+func GetMany(client spotify.Client, ids []spotify.ID) ([]spotify.FullTrack, error) {
+	pageLimit := 50
+	tracks := []spotify.FullTrack{}
+
+	if len(ids) == 0 {
+		return tracks, nil
+	}
+
+	chunks := utils.ChunkIDs(ids, pageLimit)
+
+	for _, chunkIDs := range chunks {
+		pointerTracks, err := client.GetTracks(chunkIDs...)
+		if err != nil {
+			return tracks, fmt.Errorf("Failed to get many tracks: %v", err)
+		}
+
+		for _, track := range pointerTracks {
+			tracks = append(tracks, *track)
+		}
+	}
+
+	return tracks, nil
+}
+
 func GetUnique(tracks []spotify.FullTrack) []spotify.FullTrack {
 	uniqueTracks := []spotify.FullTrack{}
 
@@ -90,9 +114,9 @@ func GetTrackCountByArtists(tracksByArtist spotifytrack.ArtistFullTrackMap, arti
 
 	if tracks, exists := tracksByArtist[artistKey]; exists {
 		return len(tracks)
-	} else {
-		return 0
 	}
+
+	return 0
 }
 
 func getMapKey(track spotify.FullTrack) string {

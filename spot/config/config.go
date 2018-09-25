@@ -17,6 +17,11 @@ const (
 	CredentialsFlowClientCredentials = "client-credentials"
 	CredentialsFlowRedirect          = "redirect"
 
+	OperationTypeDiscovery            = "discovery"
+	OperationTypeTrackRecommendations = "recommendation"
+
+	CountrySweden = "SE"
+
 	defaultPlaylistPattern = "^Metal ([0-9]+)"
 	CacheFilename          = ".ignored/.cache.json"
 
@@ -65,7 +70,10 @@ var (
 
 	CredentialsFlow = CredentialsFlowClientCredentials
 
-	OutputType = OutputTypeConsole
+	OutputType    = OutputTypeConsole
+	OperationType = OperationTypeDiscovery
+
+	Country = CountrySweden
 )
 
 var usernameFlag = flag.String(
@@ -104,6 +112,18 @@ var playlistNamePatternFlag = flag.String(
 	"The playlist name pattern to use as base",
 )
 
+var operationFlag = flag.String(
+	"operation",
+	OperationTypeDiscovery,
+	"The operation to perform",
+)
+
+var countryFlag = flag.String(
+	"country",
+	CountrySweden,
+	"The country to base recommendations on. Example: SE",
+)
+
 func init() {
 	flag.Parse()
 
@@ -114,4 +134,6 @@ func init() {
 	CredentialsFlow = *credentialsFlowFlag
 	RedirectURL = fmt.Sprintf(redirectURLBase, *addressFlag, *portFlag)
 	PlaylistNamePattern = *playlistNamePatternFlag
+	OperationType = *operationFlag
+	Country = *countryFlag
 }

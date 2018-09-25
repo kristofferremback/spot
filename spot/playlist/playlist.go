@@ -280,7 +280,6 @@ func createPlaylist(client spotify.Client, user *spotify.User, name string) (spo
 }
 
 func truncatePlaylist(client spotify.Client, user *spotify.User, playlist Playlist) (Playlist, error) {
-	trackIDs := []spotify.ID{}
 	tracks := playlist.Tracks
 	var err error
 
@@ -295,14 +294,10 @@ func truncatePlaylist(client spotify.Client, user *spotify.User, playlist Playli
 		return playlist, nil
 	}
 
-	for _, track := range tracks {
-		trackIDs = append(trackIDs, track.ID)
-	}
-
 	playlist.SnapshotID, err = client.RemoveTracksFromPlaylist(
 		user.ID,
 		playlist.ID,
-		trackIDs...,
+		utils.GetSpotifyIDs(tracks)...,
 	)
 	if err != nil {
 		return playlist, fmt.Errorf("Failed to truncate playlist %s: %v", playlist.Name, err)
@@ -316,16 +311,10 @@ func truncatePlaylist(client spotify.Client, user *spotify.User, playlist Playli
 func addTracks(client spotify.Client, playlist Playlist, tracks []spotify.FullTrack) (Playlist, error) {
 	var err error
 
-	trackIDs := []spotify.ID{}
-
-	for _, track := range tracks {
-		trackIDs = append(trackIDs, track.ID)
-	}
-
 	playlist.SnapshotID, err = client.AddTracksToPlaylist(
 		playlist.SimplePlaylist.Owner.ID,
 		playlist.ID,
-		trackIDs...,
+		utils.GetSpotifyIDs(tracks)...,
 	)
 	if err != nil {
 		return playlist, fmt.Errorf("Failed to add tracks to playlist %s: %v", playlist.Name, err)

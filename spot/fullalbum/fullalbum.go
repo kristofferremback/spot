@@ -13,11 +13,19 @@ import (
 	"github.com/zmb3/spotify"
 )
 
+var albumCache = map[spotify.ID]spotify.FullAlbum{}
+
 func Get(client spotify.Client, id spotify.ID) (spotify.FullAlbum, error) {
+	if album, exists := albumCache[id]; exists {
+		return album, nil
+	}
+
 	album, err := client.GetAlbum(id)
 	if err != nil {
 		return spotify.FullAlbum{}, fmt.Errorf("Failed to get full album %s: %v", id, err)
 	}
+
+	albumCache[id] = *album
 
 	return *album, nil
 }
@@ -34,6 +42,8 @@ func GetMany(client spotify.Client, albumIDs []spotify.ID) ([]spotify.FullAlbum,
 
 		for _, album := range albumChunk {
 			albums = append(albums, *album)
+
+			albumCache[album.ID] = *album
 		}
 	}
 

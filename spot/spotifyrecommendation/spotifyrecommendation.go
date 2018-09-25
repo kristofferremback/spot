@@ -3,7 +3,6 @@ package spotifyrecommendation
 import (
 	"fmt"
 	"math"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/zmb3/spotify"
@@ -23,15 +22,12 @@ type RecommendationParameters struct {
 
 func Recommend(client spotify.Client) ([]spotify.FullTrack, error) {
 	tracks := []spotify.FullTrack{}
-	pageLimit := 50
-	chunkSize := 5
+	pageLimit := 5
 
 	userTopArtists, err := client.CurrentUsersTopArtistsOpt(&spotify.Options{Limit: &pageLimit})
 	if err != nil {
 		return tracks, fmt.Errorf("Failed to get user's top artists: %v", err)
 	}
-
-	artistIDs := utils.GetSpotifyIDs(userTopArtists.Artists)
 
 	userTopTracks, err := client.CurrentUsersTopTracks()
 	if err != nil {
@@ -43,22 +39,14 @@ func Recommend(client spotify.Client) ([]spotify.FullTrack, error) {
 		return tracks, err
 	}
 
-	chunkedIDs := utils.ChunkIDs(artistIDs, chunkSize)
-
-	for pageIndex, artistIDs := range chunkedIDs {
-		indexFromPage := pageIndex * chunkSize
-		pageArtists := userTopArtists.Artists[indexFromPage : indexFromPage+chunkSize]
-
-		logrus.Infof(
-			"Basing the recommendations on the artists: %s",
-			strings.Join(utils.GetSpotifyNames(pageArtists), ", "),
-		)
+	for _, artist := range userTopArtists.Artists {
+		logrus.Infof("Fetching recommendations seeded by artist %s", artist.Name)
 
 		params := RecommendationParameters{
 			FromYear:      2016,
 			MinTrackCount: 100,
 			Seeds: spotify.Seeds{
-				Artists: artistIDs,
+				Artists: []spotify.ID{artist.ID},
 			},
 			TrackAttributes: trackAttributes,
 		}
@@ -67,6 +55,8 @@ func Recommend(client spotify.Client) ([]spotify.FullTrack, error) {
 		if err != nil {
 			return tracks, err
 		}
+
+		logrus.Infof("Fetched %d recommendations seeded by artist %s", len(pageTracks), artist.Name)
 
 		tracks = append(tracks, pageTracks...)
 	}
@@ -91,8 +81,6 @@ func getRecommendedTracks(client spotify.Client, params RecommendationParameters
 		return tracks, fmt.Errorf("Failed to get recommendations: %v", err)
 	}
 
-	logrus.Infof("Fetched recommendations")
-
 	totalCount += len(page.Tracks)
 
 	fullTracks, err := fulltrack.GetMany(client, utils.GetSpotifyIDs(page.Tracks))
@@ -111,8 +99,6 @@ func getRecommendedTracks(client spotify.Client, params RecommendationParameters
 			tracks = append(tracks, track)
 		}
 	}
-
-	logrus.Infof("Successfully fetched %d recommendations out of %d total", trackCount, totalCount)
 
 	return tracks, nil
 }
@@ -148,6 +134,7 @@ func getTrackAttributes(client spotify.Client, tracks []spotify.FullTrack) (*spo
 	averageLiveness := utils.AverageFloat(liveness)
 	averageEnergy := utils.AverageFloat(energy)
 	averageValence := utils.AverageFloat(valence)
+
 	attributes = spotify.NewTrackAttributes().
 		MaxAcousticness(math.Min(averageAcousticness+.3, 0.8)).
 		MaxInstrumentalness(math.Min(averageInstrumentalness+.3, 0.8)).

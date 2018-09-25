@@ -20,7 +20,7 @@ cli-redirect-recommendation:
 		-user drklump \
 		-playlist-pattern '^Metal [0-9]+' \
 		-credentials-flow redirect \
-		-output-type console \
+		-output-type playlist \
 		-operation recommendation
 
 cli-redirect-check-track:

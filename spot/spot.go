@@ -45,7 +45,7 @@ func Run(client spotify.Client) {
 		discover(client)
 
 		break
-	case config.OperationTypeTrackRecommendations:
+	case config.OperationTypeRecommendations:
 		recommend(client)
 
 		break
@@ -152,6 +152,15 @@ func recommend(client spotify.Client) {
 	}
 
 	defer fmt.Printf("\n%s\n", suggestion.CreatePrintableTable(recommendations.Suggestions))
+
+	if config.OutputType == config.OutputTypePlaylist {
+		createPlaylist(
+			client,
+			recommendations.User,
+			config.SpottedRecommendationsPlaylistName,
+			suggestion.GetTracks(recommendations.Suggestions),
+		)
+	}
 }
 
 func discover(client spotify.Client) {
@@ -165,22 +174,31 @@ func discover(client spotify.Client) {
 	defer fmt.Printf("\n%s\n", suggestion.CreatePrintableTable(discovery.Suggestions))
 
 	if config.OutputType == config.OutputTypePlaylist {
-		remotePlaylist, err := playlist.SetRemotePlaylist(
+		createPlaylist(
 			client,
 			discovery.User,
-			config.SpottedPlaylistName,
+			config.SpottedDiscoveryPlaylistName,
 			suggestion.GetTracks(discovery.Suggestions),
 		)
-		if err != nil {
-			logrus.Error(err)
+	}
+}
 
-			return
-		}
-
-		logrus.Infof("Set playlist %s with the suggested tracks.", remotePlaylist.Name)
+func createPlaylist(
+	client spotify.Client,
+	user *spotify.User,
+	name string,
+	tracks []spotify.FullTrack,
+) {
+	remotePlaylist, err := playlist.SetRemotePlaylist(client, user, name, tracks)
+	if err != nil {
+		logrus.Error(err)
 
 		return
 	}
+
+	logrus.Infof("Set playlist %s with the suggested tracks.", remotePlaylist.Name)
+
+	return
 }
 
 func getState(client spotify.Client) (State, error) {

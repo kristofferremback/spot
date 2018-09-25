@@ -17,10 +17,10 @@ const (
 	CredentialsFlowClientCredentials = "client-credentials"
 	CredentialsFlowRedirect          = "redirect"
 
-	OperationTypeDiscovery            = "discovery"
-	OperationTypeTrackRecommendations = "recommendation"
-	OperationTypeCheckTrackExists     = "check-track"
-	OperationTypeCheckPlaylistHoles   = "check-playlist-holes"
+	OperationTypeDiscovery          = "discovery"
+	OperationTypeRecommendations    = "recommendation"
+	OperationTypeCheckTrackExists   = "check-track"
+	OperationTypeCheckPlaylistHoles = "check-playlist-holes"
 
 	CountrySweden = "SE"
 
@@ -38,7 +38,7 @@ const (
 
 	ArtistJoinCharacter = ","
 
-	spottedPlaylistBase = "Spotted™ %s"
+	spottedPlaylistBase = "Spotted™ %s %s"
 	redirectURLBase     = "http://%s:%d/authenticate"
 )
 
@@ -66,10 +66,20 @@ var (
 		"remix":        -30,
 	}
 
-	Port                = defaultPort
-	Address             = defaultAddress
-	RedirectURL         = ""
-	SpottedPlaylistName = fmt.Sprintf(spottedPlaylistBase, time.Now().Format("2006-01-02"))
+	Port        = defaultPort
+	Address     = defaultAddress
+	RedirectURL = ""
+
+	SpottedDiscoveryPlaylistName = fmt.Sprintf(
+		spottedPlaylistBase,
+		OperationTypeDiscovery,
+		time.Now().Format("2006-01-02"),
+	)
+	SpottedRecommendationsPlaylistName = fmt.Sprintf(
+		spottedPlaylistBase,
+		OperationTypeRecommendations,
+		time.Now().Format("2006-01-02"),
+	)
 
 	CredentialsFlow = CredentialsFlowClientCredentials
 

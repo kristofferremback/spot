@@ -14,7 +14,6 @@ import (
 	"github.com/kristofferostlund/spot/spot/spotifytrack"
 	"github.com/kristofferostlund/spot/spot/spotifytrack/fulltrack"
 	"github.com/kristofferostlund/spot/spot/utils"
-	"github.com/kristofferostlund/spotter/spotter/common"
 )
 
 type Suggestion struct {
@@ -169,10 +168,10 @@ func CreatePrintableTable(suggestions []Suggestion) string {
 		output += fmt.Sprintf(
 			"%-02d %s %s %s %s %-6d %-5d %36s\n",
 			index+1,
-			common.FixedWidthString(s.Track.Name, 30),
-			common.FixedWidthString(s.Playlist.Name, 30),
-			common.FixedWidthString(utils.JoinArtists(s.Track.Artists, ", "), 30),
-			common.FixedWidthString(s.Album.Name, 30),
+			utils.FixedWidthString(s.Track.Name, 30),
+			utils.FixedWidthString(s.Playlist.Name, 30),
+			utils.FixedWidthString(utils.JoinArtists(s.Track.Artists, ", "), 30),
+			utils.FixedWidthString(s.Album.Name, 30),
 			s.Album.ReleaseDateTime().Year(),
 			s.Relevance,
 			s.Track.URI,

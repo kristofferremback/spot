@@ -57,7 +57,7 @@ func RedirectAuthenticator(clientID, clientSecret, redirectURL string) (spotify.
 	authenticator := getAuthenticator(redirectURL)
 	authenticator.SetAuthInfo(clientID, clientSecret)
 
-	return authenticator, uuid.Must(uuid.NewV4()).String()
+	return authenticator, uuid.NewV4().String()
 }
 
 func CachedRedirect(clientID, clientSecret, redirectURL string) (spotify.Client, bool, error) {

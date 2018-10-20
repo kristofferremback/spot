@@ -194,11 +194,15 @@ func listTracks(
 ) ([]spotify.FullTrack, error) {
 	pageLimit := 100
 	totalCount := -1
+	totalAttempts := 0
 	tracks := []spotify.FullTrack{}
+	var maxAttempts int
 
 	logrus.Debugf("Listing tracks for playlist %s", simplePlaylist.Name)
 
 	for totalCount != len(tracks) {
+		totalAttempts++
+
 		offset := len(tracks)
 		options := &spotify.Options{Limit: &pageLimit, Offset: &offset}
 
@@ -213,6 +217,20 @@ func listTracks(
 		}
 
 		totalCount = page.Total
+		maxAttempts = totalCount/pageLimit + 2
+
+		if totalAttempts == maxAttempts {
+			logrus.Warnf(
+				"Reached the estimated request limit for %s. Fetched %d/%d tracks on %d/%d requests.",
+				simplePlaylist.Name,
+				len(tracks),
+				totalCount,
+				totalAttempts,
+				maxAttempts,
+			)
+
+			break
+		}
 
 		for _, track := range page.Tracks {
 			tracks = append(tracks, track.Track)

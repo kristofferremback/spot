@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/kristofferostlund/spot/spot"
 	"github.com/kristofferostlund/spot/spot/auth"
+	"github.com/kristofferostlund/spot/spot/authserver"
 	"github.com/kristofferostlund/spot/spot/config"
-	"github.com/kristofferostlund/spot/spot/server"
 
 	"github.com/sirupsen/logrus"
 )
@@ -25,7 +25,7 @@ func main() {
 			logrus.Warnf("Failed to read token cache: %v", err)
 		}
 
-		server.Serve(spot.Run)
+		authserver.Serve(spot.Run)
 
 		return
 	}

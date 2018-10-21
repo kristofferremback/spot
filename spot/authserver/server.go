@@ -1,4 +1,4 @@
-package server
+package authserver
 
 import (
 	"context"
@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/kristofferostlund/spot/spot/config"
-	"github.com/zmb3/spotify"
 
 	"github.com/sirupsen/logrus"
+	"github.com/zmb3/spotify"
 )
 
 const ServerClosedErrorMessage = "http: Server closed"
